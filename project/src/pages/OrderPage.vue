@@ -23,7 +23,7 @@
         Корзина
       </h1>
       <span class="content__info">
-        {{ totalItems }} товара
+        {{ totalItems }} {{ totalItems | getItemsCountWord }}
       </span>
     </div>
 
@@ -43,45 +43,38 @@
           </div>
 
           <div class="cart__options">
-            <h3 class="cart__title">Доставка</h3>
-            <ul class="cart__options options">
-              <li class="options__item">
-                <label class="options__label">
-                  <input class="options__radio sr-only" type="radio" name="delivery" value="0" checked="">
-                  <span class="options__value">
-                    Самовывоз <b>бесплатно</b>
-                  </span>
-                </label>
-              </li>
-              <li class="options__item">
-                <label class="options__label">
-                  <input class="options__radio sr-only" type="radio" name="delivery" value="500">
-                  <span class="options__value">
-                    Курьером <b>500 ₽</b>
-                  </span>
-                </label>
-              </li>
-            </ul>
+            <div class="cart__option-wrapper">
+              <h3 class="cart__title">Доставка</h3>
+              <ul class="cart__options options">
+                <li class="options__item" v-for="delivery in deliveries" :key="delivery.id">
+                  <label class="options__label">
+                    <input class="options__radio sr-only" type="radio" name="deliveryTypeId" :value="delivery.id" v-model="formData.deliveryTypeId">
+                    <span class="options__value">
+                      {{ delivery.title }}
+                      <b>{{ delivery.price !== '0' ? delivery.price : 'бесплатно' }}</b>
+                    </span>
+                  </label>
+                </li>
+              </ul>
+              <span class="form__error" v-if="formError.deliveryTypeId">{{ formError.deliveryTypeId }}</span>
+            </div>
 
-            <h3 class="cart__title">Оплата</h3>
-            <ul class="cart__options options">
-              <li class="options__item">
-                <label class="options__label">
-                  <input class="options__radio sr-only" type="radio" name="pay" value="card">
-                  <span class="options__value">
-                    Картой при получении
-                  </span>
-                </label>
-              </li>
-              <li class="options__item">
-                <label class="options__label">
-                  <input class="options__radio sr-only" type="radio" name="pay" value="cash">
-                  <span class="options__value">
-                    Наличными при получении
-                  </span>
-                </label>
-              </li>
-            </ul>
+            <transition name="slide-down-fade" mode="out-in">
+              <div class="cart__option-wrapper" v-if="payments.length" :key="payments.length">
+                <h3 class="cart__title">Оплата</h3>
+                <ul class="cart__options options">
+                  <li class="options__item" v-for="payment in payments" :key="payment.id">
+                    <label class="options__label">
+                      <input class="options__radio sr-only" type="radio" name="paymentTypeId" :value="payment.id" v-model="formData.paymentTypeId">
+                      <span class="options__value">
+                        {{ payment.title }}
+                      </span>
+                    </label>
+                  </li>
+                </ul>
+                <span class="form__error" v-if="formError.paymentTypeId">{{ formError.paymentTypeId }}</span>
+              </div>
+            </transition>
           </div>
         </div>
 
@@ -100,11 +93,11 @@
           </ul>
 
           <div class="cart__total">
-            <p>Доставка: <b>500 ₽</b></p>
+            <p>Доставка: <b>{{ deliveryPrice | getPriceInRub }}</b></p>
             <p>Итого: <b>{{ totalItems }}</b> товара на сумму <b>{{ totalPrice | getPriceInRub }}</b></p>
           </div>
 
-          <button class="cart__button button button--primery" type="submit">
+          <button class="cart__button button button--primery button--animated" type="submit">
             Оформить заказ
           </button>
         </div>
@@ -128,6 +121,7 @@ import BaseFormText from "@/components/BaseFormText";
 import BaseFormTextarea from "@/components/BaseFormTextarea";
 import { mapGetters } from "vuex";
 import getPriceInRub from "@/helpers/getPriceInRub";
+import getItemsCountWord from "@/helpers/getItemsCountWord";
 import axios from "axios";
 import { API_BASE_URL } from "@/config";
 
@@ -139,10 +133,13 @@ export default {
       formError: {},
       formErrorMessage: '',
       isLoading: false,
+      deliveries: [],
+      payments: [],
     }
   },
   filters: {
-    getPriceInRub
+    getPriceInRub,
+    getItemsCountWord
   },
   components: {
     BaseFormText,
@@ -155,6 +152,9 @@ export default {
       totalPrice: 'cartTotalPrice',
       totalItems: 'cartTotalItems'
     }),
+    deliveryPrice() {
+      return this.deliveries.find(delivery => delivery.id === this.formData.deliveryTypeId)?.price || 0
+    }
   },
   methods: {
     order() {
@@ -180,11 +180,57 @@ export default {
           this.formErrorMessage = error.response.data.error.message || ''
         })
         .finally(() => this.isLoading = false)
+    },
+    getDeliveries() {
+      axios
+        .get(API_BASE_URL + '/api/deliveries')
+        .then((res) => {
+          this.deliveries = res.data
+        })
+    }
+  },
+  created() {
+    this.getDeliveries()
+  },
+  watch: {
+    'formData.deliveryTypeId'(deliveryTypeId) {
+      axios
+        .get(API_BASE_URL + '/api/payments', {
+          params: {
+            deliveryTypeId
+          }
+        })
+        .then((res) => {
+          this.payments = res.data
+        })
     }
   }
 }
 </script>
 
-<style scoped>
+<style lang="scss">
+.cart__option-wrapper {
+  position: relative;
 
+  &:not(:last-child) {
+    margin-bottom: 40px;
+  }
+}
+
+.slide-down-fade {
+
+  &-enter-active {
+    transition: all .3s ease;
+  }
+
+  &-leave-active {
+    transition: all .6s ease;
+  }
+
+  &-enter,
+  &-leave-to {
+    transform: translateY(-10%);
+    opacity: 0;
+  }
+}
 </style>

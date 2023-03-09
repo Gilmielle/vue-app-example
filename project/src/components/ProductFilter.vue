@@ -18,7 +18,7 @@
       <fieldset class="form__block">
         <legend class="form__legend">Категория</legend>
         <label class="form__label form__label--select">
-          <select class="form__select" type="text" name="category" v-model.number="currentCategoryId">
+          <select class="form__select" name="category" v-model.number="currentCategoryId" @change="getProductProps">
             <option value="0">Все категории</option>
             <option :value="category.id" v-for="category in categories" :key="category.id">
               {{ category.title }}
@@ -27,74 +27,24 @@
         </label>
       </fieldset>
 
-      <fieldset class="form__block">
-        <legend class="form__legend">Цвет</legend>
-        <ul class="colors">
-          <li class="colors__item" v-for="color in colors" :key="color.id">
+      <fieldset class="form__block" v-for="prop in availableProductProps" :key="prop.id">
+        <legend class="form__legend">{{ prop.title }}</legend>
+
+        <ul class="colors" v-if="prop.title === 'Цвет'">
+          <li class="colors__item" v-for="color in availableColors" :key="color.id">
             <label class="colors__label">
-              <input class="colors__radio sr-only" type="radio" name="color" :value="color.id" :aria-label="color.title" v-model.number="currentColorId">
+              <input class="colors__radio sr-only" type="checkbox" name="color" :value="color.title" :aria-label="color.title" @change="changeProductProps">
               <span class="colors__value" :style="{backgroundColor: color.code}"></span>
             </label>
           </li>
-
         </ul>
-      </fieldset>
-
-      <fieldset class="form__block">
-        <legend class="form__legend">Объемб в ГБ</legend>
-        <ul class="check-list">
-          <li class="check-list__item">
+        <ul v-else class="check-list">
+          <li class="check-list__item" v-for="value in prop.availableValues" :key="value.value">
             <label class="check-list__label">
-              <input class="check-list__check sr-only" type="checkbox" name="volume" value="8" checked="">
+              <input class="check-list__check sr-only" type="checkbox" :name="prop.code" :value="value.value" @change="changeProductProps">
               <span class="check-list__desc">
-                    8
-                    <span>(313)</span>
-                  </span>
-            </label>
-          </li>
-          <li class="check-list__item">
-            <label class="check-list__label">
-              <input class="check-list__check sr-only" type="checkbox" name="volume" value="16">
-              <span class="check-list__desc">
-                    16
-                    <span>(461)</span>
-                  </span>
-            </label>
-          </li>
-          <li class="check-list__item">
-            <label class="check-list__label">
-              <input class="check-list__check sr-only" type="checkbox" name="volume" value="32">
-              <span class="check-list__desc">
-                    32
-                    <span>(313)</span>
-                  </span>
-            </label>
-          </li>
-          <li class="check-list__item">
-            <label class="check-list__label">
-              <input class="check-list__check sr-only" type="checkbox" name="volume" value="64">
-              <span class="check-list__desc">
-                    64
-                    <span>(313)</span>
-                  </span>
-            </label>
-          </li>
-          <li class="check-list__item">
-            <label class="check-list__label">
-              <input class="check-list__check sr-only" type="checkbox" name="volume" value="128">
-              <span class="check-list__desc">
-                    128
-                    <span>(313)</span>
-                  </span>
-            </label>
-          </li>
-          <li class="check-list__item">
-            <label class="check-list__label">
-              <input class="check-list__check sr-only" type="checkbox" name="volume" value="264">
-              <span class="check-list__desc">
-                    264
-                    <span>(313)</span>
-                  </span>
+                {{ value.value }}
+              </span>
             </label>
           </li>
         </ul>
@@ -103,7 +53,7 @@
       <button class="filter__submit button button--primery" type="submit">
         Применить
       </button>
-      <button class="filter__reset button button--second" type="button" @click.prevent="reset">
+      <button v-if="isFilterSelected" class="filter__reset button button--second" type="button" @click.prevent="reset">
         Сбросить
       </button>
     </form>
@@ -121,16 +71,17 @@ export default {
       currentPriceFrom: 0,
       currentPriceTo: 0,
       currentCategoryId: 0,
-      currentColorId: 0,
       categoriesData: null,
       colorsData: null,
+      currentProductProps: {},
+      availableProductProps: null,
     }
   },
   props: {
     priceFrom: Number,
     priceTo: Number,
     categoryId: Number,
-    colorId: Number
+    productProps: Object,
   },
   computed: {
     categories() {
@@ -138,6 +89,19 @@ export default {
     },
     colors() {
       return this.colorsData ? this.colorsData.items : []
+    },
+    isFilterSelected() {
+      return !!this.currentPriceFrom || !!this.currentPriceTo || !!this.currentCategoryId
+    },
+    availableColors() {
+      if(!this.availableProductProps) return []
+
+      const colorProps = this.availableProductProps.find(prop => prop.title === 'Цвет').availableValues
+      return this.colors.filter(color => {
+        return colorProps.some((colorProp) => {
+          return colorProp.value === color.title.replaceAll('ё', 'е');
+        });
+      })
     }
   },
   watch: {
@@ -150,22 +114,28 @@ export default {
     categoryId(value) {
       this.currentCategoryId = value;
     },
-    colorId(value) {
-      this.currentColorId = value;
-    }
+    productProps(value) {
+      this.currentProductProps = value;
+    },
   },
   methods: {
     submit() {
       this.$emit('update:priceFrom', this.currentPriceFrom)
       this.$emit('update:priceTo', this.currentPriceTo)
       this.$emit('update:categoryId', this.currentCategoryId)
-      this.$emit('update:colorId', this.currentColorId)
+      this.$emit('update:productProps', this.currentProductProps)
     },
     reset() {
+      this.currentPriceFrom = 0;
+      this.currentPriceTo = 0;
+      this.currentCategoryId = 0;
+      this.currentProductProps = {};
+      this.availableProductProps = null;
+
       this.$emit('update:priceFrom', 0)
       this.$emit('update:priceTo', 0)
       this.$emit('update:categoryId', 0)
-      this.$emit('update:colorId', 0)
+      this.$emit('update:productProps', {})
     },
     loadCategories() {
       axios.get(API_BASE_URL + '/api/productCategories')
@@ -174,11 +144,32 @@ export default {
     loadColors() {
       axios.get(API_BASE_URL + '/api/colors')
         .then(response => this.colorsData = response.data)
+    },
+    getProductProps() {
+      this.currentProductProps = {};
+      axios.get(API_BASE_URL + '/api/productCategories/' + this.currentCategoryId)
+        .then(response => {
+          this.availableProductProps = response.data.productProps
+        })
+    },
+    changeProductProps(event) {
+      const { target } = event
+      if (this.currentProductProps[target.name]) {
+        if(this.currentProductProps[target.name].includes(target.value)) {
+          this.currentProductProps[target.name] = this.currentProductProps[target.name].filter(item => item !== target.value)
+        } else {
+          this.currentProductProps[target.name].push(target.value)
+        }
+      } else {
+        this.currentProductProps[target.name] = [target.value]
+      }
     }
   },
   created() {
     this.loadCategories()
     this.loadColors()
+
+    this.currentProductProps = this.productProps
   }
 };
 </script>

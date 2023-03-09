@@ -34,7 +34,7 @@
     <section class="item">
       <div class="item__pics pics">
         <div class="pics__wrapper">
-          <img width="570" height="570" :src="product.img" :alt="product.title">
+          <img ref="productImg" width="570" height="570" :src="product.img" :alt="product.title">
         </div>
       </div>
 
@@ -45,48 +45,44 @@
         </h2>
         <div class="item__form">
           <form class="form" action="#" method="POST" @submit.prevent="addToCart">
-            <b class="item__price">
+            <b class="item__price" ref="productPrice">
               {{ product.price | getPriceInRub }}
             </b>
 
-            <fieldset class="form__block">
+            <fieldset class="form__block" v-if="availableColors.length">
               <legend class="form__legend">Цвет:</legend>
               <ul class="colors">
-                <li class="colors__item" v-for="color in product.colors" :key="color.id">
+                <li class="colors__item" v-for="(color, index) in availableColors" :key="color.color.id">
                   <label class="colors__label">
-                    <input class="colors__radio sr-only" type="radio" name="color-item" :value="color.id" checked="">
-                    <span class="colors__value" :aria-label="color.title" :style="`background-color: ${color.code};`">
-                    </span>
+                    <input
+                      class="colors__radio sr-only"
+                      type="radio" name="color-item"
+                      :value="color.color.id"
+                      @change="handleColorChange(color.color)"
+                      :checked="index === 0"
+                    >
+                    <span class="colors__value" :aria-label="color.color.title" :style="`background-color: ${color.color.code};`"></span>
                   </label>
                 </li>
               </ul>
             </fieldset>
 
-            <fieldset class="form__block">
-              <legend class="form__legend">Объемб в ГБ:</legend>
+            <fieldset class="form__block" v-else>
+              <legend class="form__legend">{{ product.mainProp.title }}</legend>
 
               <ul class="sizes sizes--primery">
-                <li class="sizes__item">
+                <li class="sizes__item" v-for="(offer, index) in product.offers" :key="offer.id">
                   <label class="sizes__label">
-                    <input class="sizes__radio sr-only" type="radio" name="sizes-item" value="32">
+                    <input
+                      class="sizes__radio sr-only"
+                      type="radio"
+                      :name="offer.propValues['0'].productProp.title"
+                      :value="offer.id"
+                      @change="handleOfferChange(offer.id)"
+                      :checked="index === 0"
+                    >
                     <span class="sizes__value">
-                      32gb
-                    </span>
-                  </label>
-                </li>
-                <li class="sizes__item">
-                  <label class="sizes__label">
-                    <input class="sizes__radio sr-only" type="radio" name="sizes-item" value="64">
-                    <span class="sizes__value">
-                      64gb
-                    </span>
-                  </label>
-                </li>
-                <li class="sizes__item">
-                  <label class="sizes__label">
-                    <input class="sizes__radio sr-only" type="radio" name="sizes-item" value="128" checked="">
-                    <span class="sizes__value">
-                      128gb
+                      {{ offer.propValues['0'].value }}
                     </span>
                   </label>
                 </li>
@@ -111,12 +107,15 @@
                 </button>
               </div>
 
-              <button class="button button--primery" type="submit" :disabled="productAddSending">
+              <button class="button button--primery button--animated" type="submit" :disabled="productAddSending">
                 В корзину
               </button>
 
-              <div v-show="productAdded">Товар добавлен в корзину</div>
-              <div v-show="productAddSending">Добавляем товар в корзину...</div>
+              <div class="grid-col-span-2">
+                <div v-if="productAdded">Товар добавлен в корзину</div>
+                <div v-else-if="productAddSending">Добавляем товар в корзину...</div>
+                <div v-else-if="productAddFailed">Что-то пошло не так, попробуйте позже</div>
+              </div>
             </div>
           </form>
         </div>
@@ -124,51 +123,30 @@
 
       <div class="item__desc">
         <ul class="tabs">
-          <li class="tabs__item">
-            <a class="tabs__link tabs__link--current">
-              Описание
-            </a>
-          </li>
-          <li class="tabs__item">
-            <a class="tabs__link" href="#">
-              Характеристики
-            </a>
-          </li>
-          <li class="tabs__item">
-            <a class="tabs__link" href="#">
-              Гарантия
-            </a>
-          </li>
-          <li class="tabs__item">
-            <a class="tabs__link" href="#">
-              Оплата и доставка
+          <li class="tabs__item" v-for="(tab, index) in tabNames" :key="index">
+            <a class="tabs__link" :class="index === currentTab ? 'tabs__link--current' : ''" @click.prevent="handleTabChange(index)">
+              {{ tab }}
             </a>
           </li>
         </ul>
 
-        <div class="item__content">
-          <p>
-            Навигация GPS, ГЛОНАСС, BEIDOU Galileo и QZSS<br>
-            Синхронизация со смартфоном<br>
-            Связь по Bluetooth Smart, ANT+ и Wi-Fi<br>
-            Поддержка сторонних приложений<br>
-          </p>
+        <div class="item__content" v-show="currentTab === 0">
+          {{ product.content }}
+        </div>
+        <div class="item__content" v-show="currentTab === 1">
+          <div v-for="spec in product.specifications" :key="spec.id">
+            <h3>{{ spec.title }}</h3>
 
-          <a href="#">
-            Все характеристики
-          </a>
-
-          <h3>Что это?</h3>
-
-          <p>
-            Wahoo ELEMNT BOLT GPS – это велокомпьютер, который позволяет оптимизировать свои велотренировки, сделав их максимально эффективными. Wahoo ELEMNT BOLT GPS синхронизируется с датчиками по ANT+, объединяя полученную с них информацию. Данные отображаются на дисплее, а также сохраняются на смартфоне. При этом на мобильное устройство можно установить как фирменное приложение, так и различные приложения сторонних разработчиков. Велокомпьютер точно отслеживает местоположение, принимая сигнал с целого комплекса спутников. Эта информация позволяет смотреть уже преодоленные маршруты и планировать новые велопрогулки.
-          </p>
-
-          <h3>Дизайн</h3>
-
-          <p>
-            Велокомпьютер Wahoo ELEMNT BOLT очень компактный. Размеры устройства составляют всего 74,6 x 47,3 x 22,1 мм. что не превышает габариты смартфона. Корпус гаджета выполнен из черного пластика. На обращенной к пользователю стороне расположен дисплей диагональю 56 мм. На дисплей выводятся координаты и скорость, а также полученная со смартфона и синхронизированных датчиков информация: интенсивность, скорость вращения педалей, пульс и т.д. (датчики не входят в комплект поставки). Корпус велокомпьютера имеет степень защиты от влаги IPX7. Это означает, что устройство не боится пыли, а также выдерживает кратковременное (до 30 минут) погружение в воду на глубину не более 1 метра.
-          </p>
+            <p>
+              {{ spec.value }}
+            </p>
+          </div>
+        </div>
+        <div class="item__content" v-show="currentTab === 2">
+          Раздел находится в разработке
+        </div>
+        <div class="item__content" v-show="currentTab === 3">
+          Раздел находится в разработке
         </div>
       </div>
     </section>
@@ -177,12 +155,11 @@
 
 <script>
 import BaseLoader from "@/components/BaseLoader";
-import goToPage from '@/helpers/goToPage';
-import getRetinaImg from '@/helpers/getRetinaImg';
 import getPriceInRub from '@/helpers/getPriceInRub';
 import axios from "axios";
 import { API_BASE_URL } from "@/config";
 import { mapActions } from "vuex";
+import getAvailableColors from "@/helpers/getAvailableColors";
 
 export default {
   name: 'ProductPage',
@@ -190,10 +167,20 @@ export default {
     return {
       productAmount: 1,
       productData: null,
+      productOfferId: null,
+      productColorId: null,
       isLoading: false,
       isError: false,
       productAdded: false,
-      productAddSending: false
+      productAddSending: false,
+      productAddFailed: false,
+      currentTab: 0,
+      tabNames: [
+        'Описание',
+        'Характеристики',
+        'Гарантия',
+        'Оплата и доставка'
+      ]
     }
   },
   filters: {
@@ -206,28 +193,55 @@ export default {
     product() {
       return {
         ...this.productData,
-        img: this.productData.image.file.url
+        img: this.productData.preview.file.url
       }
     },
     category() {
       return this.productData.category
+    },
+    availableColors() {
+      return getAvailableColors(this.product)
     }
   },
   methods: {
     ...mapActions({
       addProductToCart: 'addProductToCart'
     }),
-    getRetinaImg,
-    goToPage,
+    handleTabChange(currentTabIndex) {
+      this.currentTab = currentTabIndex
+    },
+    handleColorChange(checkedColor) {
+      const colorData = this.product.colors.filter(item => item.color.id === checkedColor)
+      if(colorData.gallery) {
+        this.$refs.productImg.src = colorData.gallery
+      }
+
+      this.productColorId = checkedColor.id
+
+      this.productOfferId = this.product.offers.find(offer => offer.propValues['0'].value.replaceAll('ё', 'е') === checkedColor.title.replaceAll('ё', 'е'))?.id
+    },
+    handleOfferChange(offerId) {
+      this.productData.price = this.product.offers.find(offer => offer.id === offerId)?.price
+      this.productOfferId = offerId
+    },
     addToCart() {
       this.productAdded = false
       this.productAddSending = true
+      this.productAddFailed = false
+
       this.addProductToCart({
         productId: this.product.id,
-        amount: this.productAmount
+        amount: this.productAmount,
+        productOfferId: this.productOfferId,
+        colorId: this.productColorId
       })
         .then(() => {
           this.productAdded = true
+        })
+        .catch(() => {
+          this.productAddFailed = true
+        })
+        .finally(() => {
           this.productAddSending = false
         })
     },
@@ -242,7 +256,7 @@ export default {
     loadProduct() {
       this.isLoading = true;
       this.isError = false;
-      axios.get(API_BASE_URL + '/api/products/' + this.$route.params.id)
+      return axios.get(API_BASE_URL + '/api/products/' + this.$route.params.id)
         .then((response) => this.productData = response.data)
         .catch(() => this.isError = true)
         .finally(() => this.isLoading = false)
@@ -251,14 +265,73 @@ export default {
   watch: {
     '$route.params.id': {
       handler() {
-        this.loadProduct()
+        this.loadProduct().then((res) => {
+          if(this.availableColors.length) {
+            this.productColorId = this.availableColors[0].color.id
+          } else {
+            this.productColorId = res.colors[0].color.id
+          }
+          this.productOfferId = res.offers[0].id
+        })
       },
       immediate: true
     }
-  }
+  },
 };
 </script>
 
-<style scoped>
+<style lang="scss">
+.grid-col-span-2 {
+  grid-column: span 2;
+}
 
+.button--animated {
+  position: relative;
+  overflow: hidden;
+  transition: color .2s, background .2s;
+
+  &::after {
+    content: '';
+    top: 0;
+    transform: translate(100%, 100%);
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 1;
+
+    /*
+    CSS Gradient - complete browser support from http://www.colorzilla.com/gradient-editor/
+    */
+    background: -moz-linear-gradient(left, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(128,186,232,0) 99%, rgba(125,185,232,0) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(255,255,255,0)), color-stop(50%,rgba(255,255,255,0.8)), color-stop(99%,rgba(128,186,232,0)), color-stop(100%,rgba(125,185,232,0))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(left, rgba(255,255,255,0) 0%,rgba(255,255,255,0.8) 50%,rgba(128,186,232,0) 99%,rgba(125,185,232,0) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(left, rgba(255,255,255,0) 0%,rgba(255,255,255,0.8) 50%,rgba(128,186,232,0) 99%,rgba(125,185,232,0) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(left, rgba(255,255,255,0) 0%,rgba(255,255,255,0.8) 50%,rgba(128,186,232,0) 99%,rgba(125,185,232,0) 100%); /* IE10+ */
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%,rgba(255,255,255,0.8) 50%,rgba(128,186,232,0) 99%,rgba(125,185,232,0) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00ffffff', endColorstr='#007db9e8',GradientType=1 ); /* IE6-9 */
+  }
+
+  &:hover {
+    animation: scale 0.5s infinite alternate, backgroundGradient 1s infinite alternate;
+
+    &::after {
+      animation: slide 2s infinite;
+    }
+  }
+}
+
+@keyframes scale {
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes slide {
+  0% {transform:translateX(-200%);}
+  100% {transform:translateX(100%);}
+}
 </style>

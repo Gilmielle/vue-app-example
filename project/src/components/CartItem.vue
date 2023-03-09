@@ -4,8 +4,15 @@
       <img :src="item.product.img" width="120" height="120" :srcset="getRetinaImg(item.product.img)" :alt="item.product.title">
     </div>
     <h3 class="product__title">
-      {{ item.product.title }}
+      {{ item.product.product.title }}
     </h3>
+    <p class="product__info" :class="item.product.product.mainProp.title === 'Цвет' ? 'product__info--color' : ''">
+      {{ item.product.product.mainProp.title + ': ' }}
+      <span>
+        <i v-if="item.product.product.mainProp.title === 'Цвет'" :style="`background-color: ${colorCode}`"></i>
+        {{ item.product.propValues['0'].value }}
+      </span>
+    </p>
     <span class="product__code">
       Артикул: {{ item.product.id }}
     </span>
@@ -43,7 +50,8 @@ export default {
       productCounterActions: {
         plus: 'plus',
         minus: 'minus'
-      }
+      },
+      colorCode: null
     }
   },
   props: {
@@ -51,11 +59,11 @@ export default {
       amount: Number,
       productId: Number,
       product: {
-        categoryId: Number,
-        colorId: Number,
         id: Number,
         img: String,
         price: Number,
+        product: Object,
+        propValues: [Object],
         title: String
 
       }
@@ -72,6 +80,13 @@ export default {
       deleteProduct: 'deleteCartProduct'
     }),
     getRetinaImg,
+    setColorCode() {
+      const colorTitle = this.item.product.propValues['0'].value;
+      const colorCode = this.item.product.product.colors.find(color => color.color.title.replaceAll('ё', 'е') === colorTitle.replaceAll('ё', 'е'))?.color.code
+      if(colorCode) {
+        this.colorCode = colorCode
+      }
+    }
   },
   computed: {
     amount: {
@@ -87,6 +102,9 @@ export default {
     amount(value) {
       this.$store.dispatch('updateCartProductAmount', { productId: this.item.productId, amount: value })
     }
+  },
+  created() {
+    this.setColorCode()
   }
 }
 </script>

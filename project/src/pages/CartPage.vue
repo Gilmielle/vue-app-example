@@ -22,7 +22,7 @@
         Корзина
       </h1>
       <span class="content__info">
-        {{ totalItems }} товара
+        {{ totalItems }} {{ totalItems | getItemsCountWord }}
       </span>
     </div>
 
@@ -42,7 +42,7 @@
             Итого: <span>{{ totalPrice | getPriceInRub }}</span>
           </p>
 
-          <router-link v-if="totalItems" tag="button" :to="{ name: 'order' }" class="cart__button button button--primery" type="submit">
+          <router-link v-if="totalItems" tag="button" :to="{ name: 'order' }" class="cart__button button button--primery button--animated" type="submit">
             Оформить заказ
           </router-link>
         </div>
@@ -56,6 +56,7 @@ import { mapGetters } from 'vuex'
 import CartItem from "@/components/CartItem";
 import BaseLoader from "@/components/BaseLoader";
 import getPriceInRub from "@/helpers/getPriceInRub";
+import getItemsCountWord from "@/helpers/getItemsCountWord";
 
 export default {
   name: 'CartPage',
@@ -63,7 +64,8 @@ export default {
     isLoading: Boolean
   },
   filters: {
-    getPriceInRub
+    getPriceInRub,
+    getItemsCountWord
   },
   components: {
     CartItem,

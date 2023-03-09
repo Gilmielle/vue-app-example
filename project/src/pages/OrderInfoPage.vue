@@ -28,7 +28,7 @@
       <form class="cart__form form" action="#" method="POST">
         <div class="cart__field">
           <p class="cart__message">
-            Благодарим за&nbsp;выбор нашего магазина. На&nbsp;Вашу почту придет письмо с&nbsp;деталями заказа.
+            Благодарим за&nbsp;выбор нашего магазина. На&nbsp;Вашу почту придет письмо с деталями заказа.
             Наши менеджеры свяжутся с&nbsp;Вами в&nbsp;течение часа для уточнения деталей доставки.
           </p>
 
@@ -70,7 +70,7 @@
                 Способ оплаты
               </span>
               <span class="dictionary__value">
-                картой при получении
+                {{ orderInfo.paymentType }}
               </span>
             </li>
           </ul>
@@ -78,21 +78,21 @@
 
         <div class="cart__block">
           <ul class="cart__orders">
-            <li class="cart__order" v-for="item in orderInfo.basket?.items" :key="item.product.id">
-              <h3>{{ item.product.title }}</h3>
-              <b>{{ item.product.price | getPriceInRub }}</b>
+            <li class="cart__order" v-for="item in orderInfo.basket?.items" :key="item.productOffer.product.id">
+              <h3>{{ item.productOffer.title }}</h3>
+              <b>{{ item.productOffer.product.price | getPriceInRub }}</b>
               <span>Артикул:</span>
-              <b>{{ item.product.id }}</b>
+              <b>{{ item.productOffer.product.id }}</b>
               <span>Количество:</span>
               <b>{{ item.quantity }}</b>
               <span>Итого: </span>
-              <b>{{ (item.product.price * item.quantity) | getPriceInRub }}</b>
+              <b>{{ (item.productOffer.price * item.quantity) | getPriceInRub }}</b>
             </li>
           </ul>
 
           <div class="cart__total">
-            <p>Доставка: <b>500 ₽</b></p>
-            <p>Итого: <b>{{ totalItems }}</b> товара на сумму <b>{{ totalPrice | getPriceInRub }}</b></p>
+            <p>Доставка: <b>{{ orderInfo.deliveryType.price | getPriceInRub }}</b></p>
+            <p>Итого: <b>{{ totalItems }}</b> {{ totalItems | getItemsCountWord }} на сумму <b>{{ totalPrice | getPriceInRub }}</b></p>
           </div>
         </div>
       </form>
@@ -102,6 +102,7 @@
 
 <script>
 import getPriceInRub from "@/helpers/getPriceInRub";
+import getItemsCountWord from "@/helpers/getItemsCountWord";
 
 export default {
   name: "OrderInfoPage",
@@ -117,14 +118,15 @@ export default {
       return this.$store.state.orderInfo || {};
     },
     totalPrice() {
-      return this.orderInfo.basket.items.reduce((acc, item) => (item.product.price * item.quantity) + acc, 0)
+      return this.orderInfo.basket.items.reduce((acc, item) => (item.productOffer.product.price * item.quantity) + acc, 0)
     },
     totalItems() {
       return this.orderInfo.basket.items.reduce((acc, item) => Number(item.quantity) + acc, 0)
     }
   },
   filters: {
-    getPriceInRub
+    getPriceInRub,
+    getItemsCountWord
   },
 }
 </script>

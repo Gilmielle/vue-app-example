@@ -2,7 +2,7 @@
   <div>
     <BaseHeader :isLoading="isLoading" />
 
-    <router-view :isLoading="isLoading" />
+    <router-view :isLoading="isLoading" class="page-content" />
 
     <BaseFooter />
   </div>
@@ -45,3 +45,9 @@ export default {
   }
 };
 </script>
+
+<style lang="scss">
+.page-content {
+  margin-top: 79px;
+}
+</style>

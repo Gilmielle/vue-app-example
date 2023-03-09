@@ -5,12 +5,12 @@
         Каталог
       </h1>
       <span class="content__info">
-        152 товара
+        {{ productsData?.pagination?.total }} {{ productsData?.pagination?.total | getItemsCountWord }}
       </span>
     </div>
 
     <div class="content__catalog">
-      <ProductFilter :price-from.sync="filterPriceFrom" :price-to.sync="filterPriceTo" :category-id.sync="filterCategoryId" :color-id.sync="filterColorId"  />
+      <ProductFilter :price-from.sync="filterPriceFrom" :price-to.sync="filterPriceTo" :category-id.sync="filterCategoryId" :product-props.sync="filterProps"  />
 
       <section class="catalog">
         <div v-if="isLoading" class="d-flex">
@@ -20,6 +20,19 @@
           <p>Произошла ошибка при загрузке товаров</p>
           <button @click.prevent="loadProducts" class="button button--reload">
             Попробовать ещё раз
+          </button>
+        </div>
+
+        <div class="items-count">
+          <button
+            class="items-count__btn"
+            :class="btn === productsPerPage ? 'items-count__btn--is-active' : ''"
+            type="button"
+            v-for="(btn, index) in itemsCountBtns"
+            :key="index"
+            @click.prevent="handleItemsCountBtnClick(btn)"
+          >
+            {{ btn }}
           </button>
         </div>
 
@@ -39,6 +52,7 @@ import ProductFilter from '@/components/ProductFilter';
 import axios from "axios";
 import { API_BASE_URL } from "@/config";
 import BaseLoader from "@/components/BaseLoader";
+import getItemsCountWord from "@/helpers/getItemsCountWord";
 
 export default {
   name: 'MainPage',
@@ -47,13 +61,17 @@ export default {
       filterPriceFrom: 0,
       filterPriceTo: 0,
       filterCategoryId: 0,
-      filterColorId: 0,
+      filterProps: {},
       page: 1,
-      productsPerPage: 3,
+      productsPerPage: 9,
       productsData: null,
       isLoading: false,
-      isError: false
+      isError: false,
+      itemsCountBtns: [9, 18, 27]
     }
+  },
+  filters: {
+    getItemsCountWord
   },
   components: {
     BaseLoader,
@@ -68,7 +86,7 @@ export default {
           .map((product) => {
             return {
               ...product,
-              img: product.image.file.url
+              img: product.preview.file.url
             }
           })
         : []
@@ -81,23 +99,34 @@ export default {
     loadProducts() {
       this.isLoading = true;
       this.isError = false;
+      const params = {
+        page: this.page,
+        limit: this.productsPerPage,
+        categoryId: this.filterCategoryId,
+      }
+      if(this.filterPriceFrom) {
+        params.minPrice = this.filterPriceFrom
+      }
+      if(this.filterPriceTo) {
+        params.maxPrice = this.filterPriceTo
+      }
+      if(this.filterProps) {
+        params.props = this.filterProps
+      }
+
       clearTimeout(this.loadProductsTimer)
       this.loadProductsTimer = setTimeout(() => {
         axios
           .get(API_BASE_URL + '/api/products', {
-            params: {
-              page: this.page,
-              limit: this.productsPerPage,
-              categoryId: this.filterCategoryId,
-              minPrice: this.filterPriceFrom,
-              maxPrice: this.filterPriceTo,
-              colorId: this.filterColorId
-            }
+            params
           })
           .then((response) => this.productsData = response.data)
           .catch(() => this.isError = true)
           .finally(() => this.isLoading = false)
       }, 0)
+    },
+    handleItemsCountBtnClick(itemsCount) {
+      this.productsPerPage = itemsCount;
     }
   },
   watch: {
@@ -113,7 +142,10 @@ export default {
     filterCategoryId() {
       this.loadProducts()
     },
-    filterColorId() {
+    filterProps() {
+      this.loadProducts()
+    },
+    productsPerPage() {
       this.loadProducts()
     }
   },
@@ -145,6 +177,34 @@ export default {
 
   &:hover {
     opacity: 0.7;
+  }
+}
+
+.items-count {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  column-gap: 16px;
+  margin-bottom: 16px;
+
+  &__btn {
+    padding: 10px 16px;
+    color: #222;
+    font-size: 16px;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: #fff;
+    border: 2px solid #9eff00;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+
+    &--is-active {
+      background-color: #9eff00;
+    }
+
+    &:hover {
+      background-color: rgba(158, 255, 0, 0.3);
+    }
   }
 }
 </style>

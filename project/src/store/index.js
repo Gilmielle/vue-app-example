@@ -50,7 +50,7 @@ export default new Vuex.Store({
     syncCartProducts(state) {
       state.cartProducts = state.cartProductsData.map((item) => {
         return {
-          productId: item.product.id,
+          productId: item.id,
           amount: item.quantity
         }
       })
@@ -66,13 +66,13 @@ export default new Vuex.Store({
   getters: {
     cartDetailProducts(state) {
       return state.cartProducts.map((item) => {
-        const product = state.cartProductsData.find(p => p.product.id === item.productId).product
+        const product = state.cartProductsData.find(p => p.id === item.productId).productOffer
 
         return {
           ...item,
           product: {
             ...product,
-            img: product.image.file.url
+            img: product.product.preview.file.url
           }
         }
       })
@@ -101,12 +101,19 @@ export default new Vuex.Store({
           commit('syncCartProducts')
         })
     },
-    addProductToCart({ commit, state }, { productId, amount }) {
-      return axios
-        .post(API_BASE_URL + '/api/baskets/products', {
+    addProductToCart({ commit, state }, { productId, amount, productOfferId = null, colorId = null }) {
+      const productData = {
         productId,
-        quantity: amount
-      },{
+        quantity: amount,
+      }
+      if(productOfferId) {
+        productData.productOfferId = productOfferId
+      }
+      if(colorId) {
+        productData.colorId = colorId
+      }
+      return axios
+        .post(API_BASE_URL + '/api/baskets/products', productData,{
         params: {
           userAccessKey: state.userAccessKey
         }
@@ -124,7 +131,7 @@ export default new Vuex.Store({
       }
       return axios
         .put(API_BASE_URL + '/api/baskets/products', {
-          productId,
+          basketItemId: productId,
           quantity: amount
         },{
           params: {
@@ -148,7 +155,7 @@ export default new Vuex.Store({
               userAccessKey: state.userAccessKey
             },
             data: {
-              productId,
+              basketItemId: productId,
             },
           })
         .then((response) => {
