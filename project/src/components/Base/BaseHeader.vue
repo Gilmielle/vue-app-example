@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import CartIndicator from '@/components/CartIndicator';
+import CartIndicator from '@/components/Cart/CartIndicator.vue';
 export default {
   name: 'BaseHeader',
   props: {

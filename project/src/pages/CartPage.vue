@@ -53,8 +53,8 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import CartItem from "@/components/CartItem";
-import BaseLoader from "@/components/BaseLoader";
+import CartItem from "@/components/Cart/CartItem.vue";
+import BaseLoader from "@/components/Base/BaseLoader.vue";
 import getPriceInRub from "@/helpers/getPriceInRub";
 import getItemsCountWord from "@/helpers/getItemsCountWord";
 

@@ -94,7 +94,7 @@
 
           <div class="cart__total">
             <p>Доставка: <b>{{ deliveryPrice | getPriceInRub }}</b></p>
-            <p>Итого: <b>{{ totalItems }}</b> товара на сумму <b>{{ totalPrice | getPriceInRub }}</b></p>
+            <p>Итого: <b>{{ totalItems }}</b> {{ totalItems | getItemsCountWord }} на сумму <b>{{ totalPrice | getPriceInRub }}</b></p>
           </div>
 
           <button class="cart__button button button--primery button--animated" type="submit">
@@ -116,9 +116,9 @@
 </template>
 
 <script>
-import BaseLoader from "@/components/BaseLoader";
-import BaseFormText from "@/components/BaseFormText";
-import BaseFormTextarea from "@/components/BaseFormTextarea";
+import BaseLoader from "@/components/Base/BaseLoader.vue";
+import BaseFormText from "@/components/Base/BaseFormText.vue";
+import BaseFormTextarea from "@/components/Base/BaseFormTextarea.vue";
 import { mapGetters } from "vuex";
 import getPriceInRub from "@/helpers/getPriceInRub";
 import getItemsCountWord from "@/helpers/getItemsCountWord";

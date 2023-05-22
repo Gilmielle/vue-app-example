@@ -82,6 +82,9 @@ export default new Vuex.Store({
     },
     cartTotalItems(state) {
       return state.cartProducts.reduce((acc, item) => Number(item.amount) + acc, 0)
+    },
+    cartTotalPositions(state) {
+      return state.cartProducts.length
     }
   },
   actions: {

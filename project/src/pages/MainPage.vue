@@ -46,12 +46,12 @@
 </template>
 
 <script>
-import ProductList from '@/components/ProductList';
-import BasePagination from '@/components/BasePagination';
-import ProductFilter from '@/components/ProductFilter';
+import ProductList from '@/components/Product/ProductList.vue';
+import BasePagination from '@/components/Base/BasePagination.vue';
+import ProductFilter from '@/components/Product/ProductFilter.vue';
 import axios from "axios";
 import { API_BASE_URL } from "@/config";
-import BaseLoader from "@/components/BaseLoader";
+import BaseLoader from "@/components/Base/BaseLoader.vue";
 import getItemsCountWord from "@/helpers/getItemsCountWord";
 
 export default {
@@ -147,6 +147,15 @@ export default {
     },
     productsPerPage() {
       this.loadProducts()
+    },
+    '$route.query.categoryId': {
+      handler: function(categoryId) {
+        if(categoryId) {
+          this.filterCategoryId = categoryId
+        }
+      },
+      deep: true,
+      immediate: true
     }
   },
   created() {

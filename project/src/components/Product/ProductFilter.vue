@@ -115,8 +115,18 @@ export default {
       this.currentCategoryId = value;
     },
     productProps(value) {
-      this.currentProductProps = value;
+      this.currentProductProps = JSON.parse(JSON.stringify(value));
     },
+    '$route.query.categoryId': {
+      handler: function(categoryId) {
+        if(categoryId) {
+          this.currentCategoryId = categoryId;
+          this.getProductProps();
+        }
+      },
+      deep: true,
+      immediate: true
+    }
   },
   methods: {
     submit() {
@@ -136,6 +146,7 @@ export default {
       this.$emit('update:priceTo', 0)
       this.$emit('update:categoryId', 0)
       this.$emit('update:productProps', {})
+      this.$router.replace({'query': null});
     },
     loadCategories() {
       axios.get(API_BASE_URL + '/api/productCategories')

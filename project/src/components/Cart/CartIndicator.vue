@@ -27,7 +27,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      totalItems: 'cartTotalItems'
+      totalItems: 'cartTotalPositions'
     }),
   }
 };

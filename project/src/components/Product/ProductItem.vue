@@ -5,9 +5,9 @@
     </router-link>
 
     <h3 class="catalog__title">
-      <a href="#">
+      <router-link :to="{name: 'product', params: {id: product.id}}">
         {{ product.title }}
-      </a>
+      </router-link>
     </h3>
 
     <span class="catalog__price">
@@ -155,11 +155,9 @@ export default {
 
 .sizes__item--black {
 
-  .sizes__radio {
-
-    &:checked~.sizes__value {
-      color: #222222;
-    }
+  .sizes__radio:checked~.sizes__value {
+    color: #222222;
+    opacity: 1;
   }
 
   .sizes__label:focus .sizes__value,

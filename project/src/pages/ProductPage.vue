@@ -19,7 +19,7 @@
           </router-link>
         </li>
         <li class="breadcrumbs__item">
-          <router-link class="breadcrumbs__link" :to="{name: 'main'}">
+          <router-link class="breadcrumbs__link" :to="{name: 'main', query: {categoryId: category.id}}">
             {{ category.title }}
           </router-link>
         </li>
@@ -154,7 +154,7 @@
 </template>
 
 <script>
-import BaseLoader from "@/components/BaseLoader";
+import BaseLoader from "@/components/Base/BaseLoader.vue";
 import getPriceInRub from '@/helpers/getPriceInRub';
 import axios from "axios";
 import { API_BASE_URL } from "@/config";
@@ -251,7 +251,7 @@ export default {
       }
     },
     increaseProductAmount() {
-      this.productAmount += 1
+      this.productAmount = Number(this.productAmount) + 1
     },
     loadProduct() {
       this.isLoading = true;
@@ -275,8 +275,14 @@ export default {
         })
       },
       immediate: true
+    },
+    productAmount(newValue, oldValue) {
+      const regex = /\D/g;
+      if (String(newValue).match(regex)) {
+        this.productAmount = Number(oldValue)
+      }
     }
-  },
+  }
 };
 </script>
 

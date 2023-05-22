@@ -3,9 +3,11 @@
     <div class="product__pic">
       <img :src="item.product.img" width="120" height="120" :srcset="getRetinaImg(item.product.img)" :alt="item.product.title">
     </div>
-    <h3 class="product__title">
+    <router-link class="product__link" :to="{name: 'product', params: {id: item.product.product.id}}">
+      <h3 class="product__title">
       {{ item.product.product.title }}
-    </h3>
+      </h3>
+    </router-link>
     <p class="product__info" :class="item.product.product.mainProp.title === 'Цвет' ? 'product__info--color' : ''">
       {{ item.product.product.mainProp.title + ': ' }}
       <span>
@@ -14,7 +16,7 @@
       </span>
     </p>
     <span class="product__code">
-      Артикул: {{ item.product.id }}
+      Артикул: {{ item.product.product.id }}
     </span>
 
     <div class="product__counter form__counter">
@@ -38,7 +40,7 @@
 </template>
 
 <script>
-import CartProductCounter from '@/components/CartProductCounter'
+import CartProductCounter from '@/components/Cart/CartProductCounter.vue'
 import getPriceInRub from "@/helpers/getPriceInRub";
 import getRetinaImg from "@/helpers/getRetinaImg";
 import { mapActions } from "vuex";
@@ -109,6 +111,16 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss">
+.product {
 
+  &__link {
+    color: #222;
+    transition: all .2s ease;
+
+    &:hover {
+      opacity: .6;
+    }
+  }
+}
 </style>
